@@ -7,7 +7,8 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "UsageMenuApp",
-            path: "Sources/UsageMenuApp"
+            path: "Sources/UsageMenuApp",
+            exclude: ["Resources"]
         )
     ]
 )

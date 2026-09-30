@@ -10,9 +10,10 @@ APP=".build/UsageMenu.app"
 
 echo "==> Bundling $APP…"
 rm -rf "$APP"
-mkdir -p "$APP/Contents/MacOS"
+mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/UsageMenuApp"
 cp "Info.plist" "$APP/Contents/Info.plist"
+cp "Sources/UsageMenuApp/Resources/AppIcon.icns" "$APP/Contents/Resources/AppIcon.icns"
 echo "APPL????" > "$APP/Contents/PkgInfo"
 
 # Ad-hoc sign so it launches without Gatekeeper complaints locally
