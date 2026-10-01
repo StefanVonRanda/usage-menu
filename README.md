@@ -12,10 +12,59 @@ Dropdown:
 
 Auto-refreshes every 5 min (30s countdown ticks). Manual Refresh button included.
 
-## Data sources (verified on this Mac)
+## Endpoints
 
-- Claude: `GET https://claude.ai/api/oauth/usage` with `Bearer` token from Keychain service `Claude Code-credentials` → `claudeAiOauth.accessToken`. Returns `five_hour.utilization` / `resets_at`, `seven_day.*`.
-- Codex: `GET https://chatgpt.com/backend-api/codex/usage` with `Bearer <tokens.access_token>` + `ChatGPT-Account-Id` from `~/.codex/auth.json`. Returns `rate_limit.primary_window` (5h) and `secondary_window` (weekly) with `used_percent` + `reset_at` (unix).
+> **Unofficial.** Neither endpoint is a documented public API. They are the internal endpoints the official CLIs use, and the app mimics those CLIs' `User-Agent`. They can change or disappear without notice; use at your own risk and within each provider's terms. Credentials are only read locally and only sent to the provider that issued them.
+
+### Claude Code
+
+```
+GET https://claude.ai/api/oauth/usage
+Authorization: Bearer <accessToken>
+anthropic-beta: oauth-2025-04-20
+User-Agent: claude-code/<version>
+```
+
+Token: macOS Keychain, generic password, service `Claude Code-credentials`. Value is JSON; the token is at `claudeAiOauth.accessToken`. Created by `claude login`.
+
+Response fields used (all optional):
+
+| Field | Meaning |
+|---|---|
+| `five_hour.utilization` | Session (5h) usage, percent 0–100 |
+| `five_hour.resets_at` | ISO-8601 reset time |
+| `seven_day.*` | Weekly window, same shape |
+| `seven_day_opus.*`, `seven_day_sonnet.*` | Per-model weekly windows |
+| `*.limit_dollars`, `used_dollars`, `remaining_dollars` | Dollar figures, when present |
+| `limits[]` | `kind`, `group`, `percent`, `severity`, `resets_at` |
+| `extra_usage.is_enabled`, `disabled_reason` | Extra-usage status |
+
+Rate-limited: the app refetches every 5 min.
+
+### Codex
+
+```
+GET https://chatgpt.com/backend-api/codex/usage
+Authorization: Bearer <tokens.access_token>
+ChatGPT-Account-Id: <tokens.account_id>
+User-Agent: codex-cli/<version>
+```
+
+Token: `~/.codex/auth.json`, keys `tokens.access_token` and `tokens.account_id`. Created by `codex login`.
+
+Response fields used (all optional):
+
+| Field | Meaning |
+|---|---|
+| `plan_type` | e.g. `plus` |
+| `rate_limit.allowed`, `limit_reached` | Current limit state |
+| `rate_limit.primary_window` | 5h window (`limit_window_seconds = 18000`) |
+| `rate_limit.secondary_window` | Weekly window (`limit_window_seconds = 604800`) |
+| `*_window.used_percent` | Usage, percent 0–100 |
+| `*_window.reset_at` | Reset time, unix seconds |
+| `*_window.reset_after_seconds` | Seconds until reset |
+| `credits.has_credits`, `balance`, `unlimited` | Credit balance |
+| `rate_limit_reset_credits.available_count` | Banked resets |
 
 If either CLI is logged out, that section shows the error with a hint to re-login.
 
@@ -37,6 +86,9 @@ Launch at login: System Settings → General → Login Items → add UsageMenu.
 
 ## Notes
 
-- Claude's `/api/oauth/usage` is rate-limited; the app caches and refetches every 5 min (same policy as `claude /usage`, which falls back to last-known within 60 min).
-- Codex windows: `primary_window.limit_window_seconds = 18000` (5h), `secondary_window = 604800` (weekly). No universal reset clock — the app always uses the `reset_at` timestamp from your account.
+- Codex has no universal reset clock; the app always uses the `reset_at` timestamp from your account.
 - Bundle is ad-hoc signed (`LSUIElement=true`, no Dock icon). For distribution, sign with your Developer ID.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
